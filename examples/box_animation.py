@@ -2,8 +2,8 @@ from __future__ import absolute_import, division, print_function
 
 import math
 import meshcat
-import meshcat.geometry as g # Use alias for brevity
-import meshcat.transformations as tf # Use alias for brevity
+import meshcat.geometry as g
+import meshcat.transformations as tf
 from meshcat.animation import Animation
 
 vis = meshcat.Visualizer().open()
@@ -37,7 +37,7 @@ anim = Animation()
 # Create 200 frames of rotation animation
 for i in range(200):
     theta = (i + 1) / 100 * 2 * math.pi
-    with anim.at_frame(vis["rotating_box"], i) as frame: # Apply anim to rotating_box path
+    with anim.at_frame(vis["rotating_box"], i) as frame:
         frame.set_transform(tf.rotation_matrix(theta, [0, 0, 1]))
 
 # Play the animation

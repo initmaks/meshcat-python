@@ -6,38 +6,77 @@ meshcat-python: Python Bindings to the MeshCat WebGL viewer
 .. image:: https://codecov.io/gh/meshcat-dev/meshcat-python/branch/master/graph/badge.svg
   :target: https://codecov.io/gh/meshcat-dev/meshcat-python
 
+.. note::
+   This is a fork of the original ``meshcat-python`` repository (version 0.3.2).
+   All changes in version 0.4.0, including the features highlighted below,
+   were made possible with the help of Cursor and `gemini-2.5-pro-exp-03-25`.
 
-MeshCat_ is a remotely-controllable 3D viewer, built on top of three.js_. The viewer contains a tree of objects and transformations (i.e. a scene graph) and allows those objects and transformations to be added and manipulated with simple commands. This makes it easy to create 3D visualizations of geometries, mechanisms, and robots. 
+MeshCat_ is a remotely-controllable 3D viewer, built on top of three.js_. The viewer contains a tree of objects and transformations (i.e. a scene graph) and allows those objects and transformations to be added and manipulated with simple commands. This makes it easy to create 3D visualizations of geometries, mechanisms, and robots.
 
 The MeshCat architecture is based on the model used by Jupyter_:
 
 - The viewer itself runs entirely in the browser, with no external dependencies
 - The MeshCat server communicates with the viewer via WebSockets
-- Your code can use the meshcat python libraries or communicate directly with the server through its ZeroMQ_ socket. 
+- Your code can use the meshcat python libraries or communicate directly with the server through its ZeroMQ_ socket.
 
 .. _ZeroMQ: http://zguide.zeromq.org/
 .. _Jupyter: http://jupyter.org/
 .. _MeshCat: https://github.com/meshcat-dev/meshcat
 .. _three.js: https://threejs.org/
 
+
+Key Features in this Fork (v0.4.0)
+==================================
+
+This fork introduces several enhancements to the viewer:
+
+Video Recording (MP4)
+----------------------
+
+Record animations directly to an MP4 video file within the browser.
+
+- **How to Use:** Select "mp4" from the "Format" dropdown in the "Animations" -> "Recording" GUI panel and click "Record". Press the Pause button (or Spacebar) to finish recording. Works without needing a separate server when using `vis.open()`.
+- **Server Requirement for Static HTML:** For MP4 recording to function correctly when MeshCat is saved as a static HTML file (`vis.save()`), the HTML file must be served from a web server providing specific HTTP headers: `Cross-Origin-Opener-Policy: same-origin` and `Cross-Origin-Embedder-Policy: require-corp`. These headers enable `SharedArrayBuffer`, which is necessary for the underlying video encoding library (`ffmpeg.wasm`).
+- **Helper Button:** If MP4 recording fails due to missing headers when using a static HTML file, a button labelled "Copy Server Cmd for MP4" may appear. Clicking this copies a Python command to your clipboard that starts a simple local server with the correct headers.
+- **Performance:** Encoding happens directly in your browser using WebAssembly. Currently, it is limited to single-threaded encoding for stability reasons.
+
+Keyboard Shortcuts
+------------------
+
+The viewer now supports keyboard shortcuts for controlling animations:
+
+- **Spacebar:** Play / Pause animation.
+- **R:** Reset animation to the beginning.
+- **Left Arrow:** Step back one frame (approx. 1/30th second).
+- **Right Arrow:** Step forward one frame (approx. 1/30th second).
+- **1:** Set playback speed to 0.01x.
+- **2:** Set playback speed to 0.1x.
+- **3:** Set playback speed to 0.5x.
+- **4:** Set playback speed to 1.0x (normal speed).
+- **5:** Set playback speed to 2.0x.
+
+
 Installation
 ------------
 
 The latest version of MeshCat requires Python 3.6 or above.
 
-Using pip:
+Using pip (from this fork):
 
 ::
 
-    pip install meshcat
+    pip install git+https://github.com/initmaks/meshcat-python.git
 
 From source:
 
 ::
 
-    git clone https://github.com/meshcat-dev/meshcat-python
+    git clone https://github.com/initmaks/meshcat-python
+    # Important: Initialize submodules
     git submodule update --init --recursive
     cd meshcat-python
+    # Optional: Build the viewer JS if you modify it
+    # cd src/meshcat/viewer && yarn install && yarn build && cd ../../..
     python setup.py install
 
 You will need the ZeroMQ libraries installed on your system:
