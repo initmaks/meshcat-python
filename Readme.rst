@@ -1,3 +1,8 @@
+**Note:** This repository is a **fork** of the original ``meshcat-python`` (version 0.3.2). 
+This fork primarily adds **in-browser MP4 video recording** and **keyboard shortcuts** 
+for animation control. All changes in version 0.4.0 were made possible with the help 
+of Cursor and ``gemini-2.5-pro-exp-03-25``.
+
 meshcat-python: Python Bindings to the MeshCat WebGL viewer
 ===========================================================
 
@@ -6,11 +11,6 @@ meshcat-python: Python Bindings to the MeshCat WebGL viewer
 .. image:: https://codecov.io/gh/meshcat-dev/meshcat-python/branch/master/graph/badge.svg
   :target: https://codecov.io/gh/meshcat-dev/meshcat-python
 
-This repository is a **fork** of the original ``meshcat-python`` (version 0.3.2). 
-This fork primarily adds **in-browser MP4 video recording** and **keyboard shortcuts** 
-for animation control. All changes in version 0.4.0 were made possible with the help 
-of Cursor and ``gemini-2.5-pro-exp-03-25``.
-==================================
 
 MeshCat_ is a remotely-controllable 3D viewer, built on top of three.js_. The viewer contains a tree of objects and transformations (i.e. a scene graph) and allows those objects and transformations to be added and manipulated with simple commands. This makes it easy to create 3D visualizations of geometries, mechanisms, and robots.
 
