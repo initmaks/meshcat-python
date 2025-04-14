@@ -152,13 +152,16 @@ fetch("data:application/octet-binary;base64,{}")
 
 
 class StaticFileHandlerNoCache(tornado.web.StaticFileHandler):
-    """Ensures static files do not get cached.
+    """Ensures static files do not get cached and enables SharedArrayBuffer.
 
     Taken from: https://stackoverflow.com/a/18879658/7829525
     """
     def set_extra_headers(self, path):
         # Disable cache
         self.set_header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+        # Enable SharedArrayBuffer
+        self.set_header('Cross-Origin-Opener-Policy', 'same-origin')
+        self.set_header('Cross-Origin-Embedder-Policy', 'require-corp')
 
 
 class ZMQWebSocketBridge(object):

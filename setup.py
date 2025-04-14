@@ -2,12 +2,12 @@ import sys
 from setuptools import setup, find_packages
 
 setup(name="meshcat",
-    version="0.3.2",
+    version="0.4.0",
     description="WebGL-based visualizer for 3D geometries and scenes",
-    url="https://github.com/rdeits/meshcat-python",
-    download_url="https://github.com/rdeits/meshcat-python/archive/v0.3.2.tar.gz",
-    author="Robin Deits",
-    author_email="mail@robindeits.com",
+    url="https://github.com/initmaks/meshcat-python",
+    download_url="https://github.com/initmaks/meshcat-python/archive/v0.4.0.tar.gz",
+    author="Maks Sorokin",
+    author_email="mksmsrkn@gmail.com",
     license="MIT",
     packages=find_packages("src"),
     package_dir={"": "src"},
@@ -18,13 +18,13 @@ setup(name="meshcat",
         ]
     },
     install_requires=[
-      "ipython >= 5",
-      "u-msgpack-python >= 2.4.1",
-      "numpy >= 1.14.0",
-      "tornado >= 4.0.0",
-      "pyzmq >= 17.0.0",
-      "pyngrok >= 4.1.6",
-      "pillow >= 7.0.0"
+      "ipython >= 8.35.0",
+      "u-msgpack-python >= 2.8.0",
+      "numpy >= 2.2.4", 
+      "tornado >= 6.4.2",
+      "pyzmq >= 26.4.0",
+      "pyngrok >= 7.2.3",
+      "pillow >= 11.2.1"
     ],
     zip_safe=False,
     include_package_data=True
