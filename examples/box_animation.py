@@ -2,11 +2,11 @@ from __future__ import absolute_import, division, print_function
 
 import math
 import meshcat
-import meshcat.geometry as g # Use alias for brevity
-import meshcat.transformations as tf # Use alias for brevity
+import meshcat.geometry as g
+import meshcat.transformations as tf
 from meshcat.animation import Animation
 
-vis = meshcat.Visualizer()#.open()
+vis = meshcat.Visualizer().open()
 
 # Original rotating box
 box = g.Box([0.5, 0.5, 0.5])
@@ -37,16 +37,10 @@ anim = Animation()
 # Create 200 frames of rotation animation
 for i in range(200):
     theta = (i + 1) / 100 * 2 * math.pi
-    with anim.at_frame(vis["rotating_box"], i) as frame: # Apply anim to rotating_box path
+    with anim.at_frame(vis["rotating_box"], i) as frame:
         frame.set_transform(tf.rotation_matrix(theta, [0, 0, 1]))
 
 # Play the animation
-vis.set_animation(anim, repetitions=0) # Loop indefinitely by default (repetitions=0)
-# Or use repetitions=1 to stop after one cycle for auto-encoding test
-# vis.set_animation(anim, repetitions=1)
+vis.set_animation(anim, repetitions=0)
 
-# input("Press Enter to continue...")
- 
-raw_html = vis.static_html()
-with open("box.html", "w") as f:
-    f.write(raw_html)
+input("Press Enter to continue...")

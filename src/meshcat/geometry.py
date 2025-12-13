@@ -609,6 +609,127 @@ class LineLoop(Object):
     _type = u"LineLoop"
 
 
+class InstancedMesh(SceneElement):
+    """
+    An InstancedMesh renders multiple instances of the same geometry and material
+    with different transformations, using a single draw call. This is extremely
+    efficient for rendering thousands of identical objects (e.g., multiple robot
+    trajectories or particle systems).
+
+    Usage:
+        # Create an instanced mesh with 1000 instances
+        instanced = InstancedMesh(geometry, material, count=1000)
+
+        # Set transforms for each instance
+        for i in range(1000):
+            instanced.set_matrix_at(i, some_4x4_matrix)
+
+        # Or set all matrices at once
+        instanced.set_matrices(np.array_of_shape_N_4_4)
+
+        vis["instances"].set_object(instanced)
+
+        # Later, update instance matrices efficiently
+        vis["instances"].set_instance_matrices(new_matrices)
+    """
+    _type = u"InstancedMesh"
+
+    def __init__(self, geometry, material=None, count=1):
+        super(InstancedMesh, self).__init__()
+        self.geometry = geometry
+        self.material = material if material is not None else MeshPhongMaterial()
+        self.count = count
+        # Initialize all instances with identity matrices
+        self._instance_matrices = np.tile(np.eye(4, dtype=np.float32), (count, 1, 1))
+        # Optional per-instance colors (RGBA)
+        self._instance_colors = None
+
+    def set_matrix_at(self, index, matrix):
+        """Set the transformation matrix for a specific instance."""
+        if index < 0 or index >= self.count:
+            raise IndexError(f"Instance index {index} out of range [0, {self.count})")
+        self._instance_matrices[index] = np.asarray(matrix, dtype=np.float32)
+
+    def set_matrices(self, matrices):
+        """
+        Set all instance matrices at once.
+
+        Args:
+            matrices: numpy array of shape (count, 4, 4) or (count, 16)
+        """
+        matrices = np.asarray(matrices, dtype=np.float32)
+        if matrices.shape == (self.count, 16):
+            matrices = matrices.reshape(self.count, 4, 4)
+        if matrices.shape != (self.count, 4, 4):
+            raise ValueError(f"Expected matrices of shape ({self.count}, 4, 4) or ({self.count}, 16), got {matrices.shape}")
+        self._instance_matrices = matrices
+
+    def set_color_at(self, index, color):
+        """
+        Set the color for a specific instance.
+
+        Args:
+            index: instance index
+            color: RGB or RGBA values in range [0, 1]
+        """
+        if self._instance_colors is None:
+            self._instance_colors = np.ones((self.count, 4), dtype=np.float32)
+        if index < 0 or index >= self.count:
+            raise IndexError(f"Instance index {index} out of range [0, {self.count})")
+        color = np.asarray(color, dtype=np.float32)
+        if len(color) == 3:
+            self._instance_colors[index, :3] = color
+        else:
+            self._instance_colors[index] = color
+
+    def set_colors(self, colors):
+        """
+        Set all instance colors at once.
+
+        Args:
+            colors: numpy array of shape (count, 3) or (count, 4) with RGB/RGBA values in [0, 1]
+        """
+        colors = np.asarray(colors, dtype=np.float32)
+        if colors.shape == (self.count, 3):
+            self._instance_colors = np.ones((self.count, 4), dtype=np.float32)
+            self._instance_colors[:, :3] = colors
+        elif colors.shape == (self.count, 4):
+            self._instance_colors = colors
+        else:
+            raise ValueError(f"Expected colors of shape ({self.count}, 3) or ({self.count}, 4), got {colors.shape}")
+
+    def lower(self):
+        """Serialize to Three.js JSON format."""
+        data = {
+            u"metadata": {
+                u"version": 4.5,
+                u"type": u"Object",
+            },
+            u"geometries": [],
+            u"materials": [],
+            u"object": {
+                u"uuid": self.uuid,
+                u"type": u"_InstancedMesh",
+                u"geometry": self.geometry.uuid,
+                u"material": self.material.uuid,
+                u"count": self.count,
+                u"matrix": list(self.geometry.intrinsic_transform().flatten()),
+                # Instance matrices as column-major flat array (Three.js convention)
+                u"instanceMatrix": pack_numpy_array(
+                    self._instance_matrices.transpose(0, 2, 1).reshape(-1).astype(np.float32)
+                )
+            }
+        }
+        # Add per-instance colors if set
+        if self._instance_colors is not None:
+            data[u"object"][u"instanceColor"] = pack_numpy_array(
+                self._instance_colors.reshape(-1).astype(np.float32)
+            )
+        self.geometry.lower_in_object(data)
+        self.material.lower_in_object(data)
+        return data
+
+
 def triad(scale=1.0):
     """
     A visual representation of the origin of a coordinate system, drawn as three
