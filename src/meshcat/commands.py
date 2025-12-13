@@ -1,4 +1,4 @@
-from .geometry import Geometry, Object, Mesh, MeshPhongMaterial, OrthographicCamera, PerspectiveCamera, PointsMaterial, Points, TextTexture
+from .geometry import Geometry, Object, Mesh, MeshPhongMaterial, OrthographicCamera, PerspectiveCamera, PointsMaterial, Points, TextTexture, InstancedMesh
 from .path import Path
 
 
@@ -9,7 +9,7 @@ class SetObject:
             if material is not None:
                 raise(ValueError("Please supply either an Object OR a Geometry and a Material"))
             self.object = geometry_or_object
-        elif isinstance(geometry_or_object, (OrthographicCamera, PerspectiveCamera)):
+        elif isinstance(geometry_or_object, (OrthographicCamera, PerspectiveCamera, InstancedMesh)):
             self.object = geometry_or_object
         else:
             if material is None:
@@ -119,4 +119,72 @@ class SetAnimation:
                 u"repetitions": self.repetitions
             },
             u"path": ""
+        }
+
+
+class SetInstanceMatrices:
+    """
+    Command to efficiently update instance matrices for an InstancedMesh.
+
+    This allows updating the transforms of all instances without re-sending
+    the geometry and material data, making it ideal for animating thousands
+    of instances.
+    """
+    __slots__ = ["matrices", "path"]
+
+    def __init__(self, matrices, path):
+        """
+        Args:
+            matrices: numpy array of shape (N, 4, 4) containing transformation
+                     matrices for each instance
+            path: Path object indicating the location of the InstancedMesh
+        """
+        import numpy as np
+        self.matrices = np.asarray(matrices, dtype=np.float32)
+        self.path = path
+
+    def lower(self):
+        from .geometry import pack_numpy_array
+        # Transpose each matrix for column-major order (Three.js convention)
+        # and flatten to a single array
+        matrices_flat = self.matrices.transpose(0, 2, 1).reshape(-1).astype(self.matrices.dtype)
+        return {
+            u"type": u"set_instance_matrices",
+            u"path": self.path.lower(),
+            u"matrices": pack_numpy_array(matrices_flat)
+        }
+
+
+class SetInstanceColors:
+    """
+    Command to efficiently update instance colors for an InstancedMesh.
+
+    This allows updating the colors of all instances without re-sending
+    the geometry and material data.
+    """
+    __slots__ = ["colors", "path"]
+
+    def __init__(self, colors, path):
+        """
+        Args:
+            colors: numpy array of shape (N, 3) or (N, 4) containing RGB/RGBA
+                   color values in range [0, 1] for each instance
+            path: Path object indicating the location of the InstancedMesh
+        """
+        import numpy as np
+        colors = np.asarray(colors, dtype=np.float32)
+        # Ensure RGBA format
+        if colors.ndim == 2 and colors.shape[1] == 3:
+            rgba = np.ones((colors.shape[0], 4), dtype=np.float32)
+            rgba[:, :3] = colors
+            colors = rgba
+        self.colors = colors
+        self.path = path
+
+    def lower(self):
+        from .geometry import pack_numpy_array
+        return {
+            u"type": u"set_instance_colors",
+            u"path": self.path.lower(),
+            u"colors": pack_numpy_array(self.colors.reshape(-1))
         }

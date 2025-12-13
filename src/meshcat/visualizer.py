@@ -8,7 +8,7 @@ from IPython.display import HTML
 
 
 from .path import Path
-from .commands import SetObject, SetTransform, Delete, SetProperty, SetAnimation, CaptureImage, SetCamTarget
+from .commands import SetObject, SetTransform, Delete, SetProperty, SetAnimation, CaptureImage, SetCamTarget, SetInstanceMatrices, SetInstanceColors
 from .geometry import MeshPhongMaterial
 from .servers.zmqserver import start_zmq_server_as_subprocess
 
@@ -169,6 +169,49 @@ class Visualizer:
         v = list(value)
         v[1], v[2] = v[2], -v[1]  # convert to left-handed (x,z,-y)
         return self[path].set_property("position", v)
+
+    def set_instance_matrices(self, matrices):
+        """
+        Update the transformation matrices for an InstancedMesh at this path.
+
+        This is much more efficient than calling set_object() again, as it only
+        sends the matrix data without re-uploading geometry/materials.
+
+        Args:
+            matrices: numpy array of shape (N, 4, 4) where N is the instance count.
+                     Each 4x4 matrix is the transformation for that instance.
+
+        Example:
+            # Create an instanced mesh
+            from meshcat.geometry import InstancedMesh, Box, MeshPhongMaterial
+            instanced = InstancedMesh(Box([0.1, 0.1, 0.1]), MeshPhongMaterial(), count=100)
+            vis["boxes"].set_object(instanced)
+
+            # Later, update all instance positions
+            matrices = np.zeros((100, 4, 4))
+            for i in range(100):
+                matrices[i] = np.eye(4)
+                matrices[i, :3, 3] = [i * 0.2, 0, 0]  # Translate along X
+            vis["boxes"].set_instance_matrices(matrices)
+        """
+        return self.window.send(SetInstanceMatrices(matrices, self.path))
+
+    def set_instance_colors(self, colors):
+        """
+        Update the colors for an InstancedMesh at this path.
+
+        Args:
+            colors: numpy array of shape (N, 3) or (N, 4) where N is the instance count.
+                   RGB values should be in range [0, 1]. If shape is (N, 3), alpha=1 is assumed.
+
+        Example:
+            # Set rainbow colors for 100 instances
+            colors = np.zeros((100, 3))
+            for i in range(100):
+                colors[i] = [i/100, 1 - i/100, 0.5]
+            vis["boxes"].set_instance_colors(colors)
+        """
+        return self.window.send(SetInstanceColors(colors, self.path))
 
     def get_image(self, w=None, h=None):
         """Save an image"""
